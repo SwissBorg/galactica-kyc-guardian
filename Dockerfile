@@ -1,15 +1,13 @@
 FROM golang:1.22 AS builder
-WORKDIR /app
 
-COPY go.* ./
+WORKDIR /app
+COPY . .
 RUN go mod download
-COPY *.go ./
-RUN go build -o /server
+RUN CGO_ENABLED=0 go build -o /entrypoint
 
-FROM debian:12-slim
-WORKDIR /app
+FROM gcr.io/distroless/static-debian12
 
-COPY --from=builder /server /server 
+COPY --from=builder /entrypoint /entrypoint 
 
 EXPOSE 8080
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/entrypoint"]
