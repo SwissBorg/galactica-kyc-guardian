@@ -18,15 +18,20 @@ docker run --rm -p 8080:8080 -t galactica-kyc-guardian
 
 The HTTP server is binded to port 8080.
 
-### Proof endpoint
+### ZK Certificate endpoint
+
+This endpoint starts the computation of a new certificate, taking as input the user's profile and the client parameters.
+
 ```
-POST /proof
+POST /zkcertificate
 ```
 
 Request body:
 ```json
 {
+  "params": {}, 
   "profile": {
+    "id": "<opaque identifier>",
     "firstname": "John",
     "lastname": "Doe",
     "date_of_birth": "1987-01-01",
@@ -42,12 +47,25 @@ Request body:
 Response body:
 ```json
 {
-  "proof": "<encoded proof>" 
+  "certificate_id": "<opaque identifier>" 
 }
 ```
 
-This endpoint computes the ZK-proof, taking as input the user's profile.
+### Get certificate
 
+This endpoint get the status of the certificate and its value when computed.
+
+```
+GET /zkcertificate/:id
+```
+
+Response body:
+```json
+{
+  "status": "...",
+  "certificate": "..."
+}
+```
 
 ### Health endpoint
 
