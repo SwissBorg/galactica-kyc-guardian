@@ -44,25 +44,19 @@ Request body:
 }
 ```
 
-Response body:
-```json
-{
-  "certificate_id": "<opaque identifier>" 
-}
-```
+Response body is empty.
 
 ### Get certificate
 
 This endpoint get the status of the certificate and its value when computed.
 
 ```
-GET /zkcertificate/:id
+GET /zkcertificate?user_id=<id>
 ```
 
 Response body:
 ```json
 {
-  "status": "...",
   "certificate": "..."
 }
 ```
