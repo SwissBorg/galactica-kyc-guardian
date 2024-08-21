@@ -1,0 +1,13 @@
+APIConf:
+  Host: "0.0.0.0"
+  Port: 8080
+  CORSEnabled: true
+  CORSOrigin: http://localhost,http://127.0.0.1:8080
+
+Node: https://evm-rpc-http-andromeda.galactica.com
+
+RegistryAddress: 0x454d8a0B2abdc7bAfef7FCbfb6B4c538c6F11C3b
+
+MerkleProofService:
+  URL: grpc-merkle-proof-service.galactica.com:443
+  TLS: true

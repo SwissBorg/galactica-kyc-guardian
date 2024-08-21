@@ -1,0 +1,7 @@
+APIConf:
+  Host: "0.0.0.0"
+  Port: 8080
+  CORSEnabled: true
+  CORSOrigin: 127.0.0.1
+
+Node: wss://evm-rpc-ws-andromeda.galactica.com
