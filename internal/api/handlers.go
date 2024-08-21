@@ -37,7 +37,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		log.WithError(err).Error("bind gen cert request")
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrParsReq.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrParsReq),
 		})
 	}
 
@@ -65,7 +65,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Errorf("%s: %s", ErrDecodePubKey.Error(), req.EncryptionPubKey)
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrDecodePubKey.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrDecodePubKey),
 		})
 	}
 	holderCommitment.EncryptionKey = decoded
@@ -73,7 +73,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err := holderCommitment.Validate(); err != nil {
 		log.WithError(err).Errorf("%s: %s", ErrValidateCommitment.Error(), holderCommitment)
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrValidateCommitment.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrValidateCommitment),
 		})
 	}
 
@@ -83,7 +83,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrParsDate)
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrParsReq.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrParsReq),
 		})
 	}
 
@@ -91,7 +91,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrParsNationality)
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrParsNationality.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrParsNationality),
 		})
 	}
 
@@ -110,7 +110,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrCertGenerating)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: ErrCertGenerating.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrCertGenerating),
 		})
 	}
 
@@ -156,7 +156,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrAddCertToQueue)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: ErrAddCertToQueue.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrAddCertToQueue),
 		})
 	}
 
@@ -166,7 +166,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrAddCertToDB)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: ErrAddCertToDB.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrAddCertToDB),
 		})
 	}
 
@@ -181,7 +181,7 @@ func (h *Handlers) GetCert(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		log.WithError(err).Error("bind get cert request")
 		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: ErrParsReq.Error(),
+			Error: fmt.Sprintf("%v: %v", err, ErrParsReq),
 		})
 	}
 
@@ -191,7 +191,7 @@ func (h *Handlers) GetCert(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error(ErrReadCertStatus)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: fmt.Sprintf("%v:%v", ErrReadCertStatus, err),
+			Error: fmt.Sprintf("%v: %v", ErrReadCertStatus, err),
 		})
 	}
 

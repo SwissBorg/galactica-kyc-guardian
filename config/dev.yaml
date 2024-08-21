@@ -6,8 +6,8 @@ APIConf:
 
 Node: https://evm-rpc-http-andromeda.galactica.com
 
-RegistryAddress: 0x454d8a0B2abdc7bAfef7FCbfb6B4c538c6F11C3b
+RegistryAddress: 0x0415E990e55071F0d448F87CD170528C7783A484
 
 MerkleProofService:
-  URL: grpc-merkle-proof-service.galactica.com:443
+  URL: merkle-proof-service.galactica.com:443/v1/galactica/41238
   TLS: true
