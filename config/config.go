@@ -10,10 +10,8 @@ type Config struct {
 }
 
 type APIConf struct {
-	Port        string `yaml:"Port" default:"8081"`
-	Host        string `yaml:"Host" default:"0.0.0.0"`
-	CORSEnabled bool   `yaml:"CORSEnabled"`
-	CORSOrigin  string `yaml:"CORSOrigin"`
+	Port string `yaml:"Port" default:"8081"`
+	Host string `yaml:"Host" default:"0.0.0.0"`
 }
 
 type MerkleProofService struct {

@@ -1,8 +1,6 @@
 APIConf:
   Host: "0.0.0.0"
   Port: 8080
-  CORSEnabled: true
-  CORSOrigin: http://localhost,http://127.0.0.1:8080
 
 Node: https://evm-rpc-http-andromeda.galactica.com
 

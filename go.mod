@@ -3,16 +3,18 @@ module github.com/swissborg/galactica-kyc-guardian
 go 1.22.5
 
 require (
-	github.com/DarkJian/iso3166 v0.0.0-20230214154550-37d41898ef74
 	github.com/Galactica-corp/merkle-proof-service v0.2.7
+	github.com/biter777/countries v1.7.5
 	github.com/dgraph-io/badger/v4 v4.2.0
 	github.com/ethereum/go-ethereum v1.14.8
 	github.com/galactica-corp/guardians-sdk v1.5.0
+	github.com/go-playground/validator/v10 v10.19.0
 	github.com/iden3/go-iden3-crypto v0.0.16
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stasundr/decimal v0.1.9
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -34,7 +36,6 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.19.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/glog v1.2.0 // indirect

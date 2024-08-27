@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	iso "github.com/DarkJian/iso3166"
+	"github.com/biter777/countries"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
 	"github.com/labstack/echo/v4"
@@ -87,14 +87,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		})
 	}
 
-	code, err := iso.I3166().ALPHA2().GetAlpha3(req.Profile.Nationality)
-	if err != nil {
-		log.WithError(err).Error(ErrParsNationality)
-		return c.JSON(http.StatusBadRequest, ErrorResp{
-			Error: fmt.Sprintf("%v: %v", err, ErrParsNationality),
-		})
-	}
-
+	code := countries.ByName(req.Profile.Nationality).Alpha3()
 	inputs := zkcertificate.KYCInputs{
 		Surname:      req.Profile.Firstname,
 		Forename:     req.Profile.Lastname,

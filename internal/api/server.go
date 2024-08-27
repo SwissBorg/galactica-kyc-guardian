@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -53,19 +52,9 @@ func (s *Server) Stop() error {
 
 func (s *Server) makeEcho(cfg config.APIConf) *echo.Echo {
 	e := echo.New()
-
-	e.Validator = &CustomValidator{validator: validator.New()}
-
 	e.Use(middleware.Recover())
 
-	if cfg.CORSEnabled {
-		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowCredentials: true,
-			AllowOrigins:     strings.Split(cfg.CORSOrigin, ","),
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowCredentials, echo.HeaderXRequestedWith},
-		}))
-	}
+	e.Validator = &CustomValidator{validator: validator.New()}
 
 	handlers := NewHandlers(s.generator, s.mem)
 

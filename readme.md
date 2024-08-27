@@ -1,4 +1,4 @@
-# swissborg-kyc-provider
+# Galactica KYC Guardian
 
 Backend service that generates encrypted zk KYC certificates for the Galactica blockchain based on Swissborg KYC data.
 
@@ -102,7 +102,7 @@ Response:
 This endpoint get the status of the certificate and its value when computed.
 
 ```
-POST /cert/get>
+POST /cert/get
 ```
 
 Request body:
