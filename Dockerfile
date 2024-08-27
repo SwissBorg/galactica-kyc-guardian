@@ -1,11 +1,10 @@
-FROM golang:1.22.2-alpine3.19 AS builder
+FROM golang:1.22.5-alpine3.19 AS builder
 WORKDIR /app
-ARG GITHUB_TOKEN
 RUN cat /etc/resolv.conf && apk add --no-cache git && \
 	git config --add --global url."git@github.com:".insteadOf https://github.com
 
 # Prepare dependencies
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 # Build the binary
 COPY ./cmd ./cmd
