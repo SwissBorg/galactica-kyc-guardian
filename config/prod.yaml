@@ -1,0 +1,11 @@
+APIConf:
+  Host: "0.0.0.0"
+  Port: 8080
+
+Node: https://evm-rpc-http-reticulum.galactica.com
+
+RegistryAddress: 0x85032c035494324f62A5AfE2507d5427dFd72e76
+
+MerkleProofService:
+  URL: merkle-proof-service.galactica.com:443/v1/galactica/9302
+  TLS: true

@@ -1,0 +1,11 @@
+APIConf:
+  Host: "0.0.0.0"
+  Port: 8080
+
+Node: https://evm-rpc-http-andromeda.galactica.com
+
+RegistryAddress: 0x0415E990e55071F0d448F87CD170528C7783A484
+
+MerkleProofService:
+  URL: merkle-proof-service.galactica.com:443/v1/galactica/41238
+  TLS: true
