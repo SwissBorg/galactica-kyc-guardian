@@ -41,7 +41,10 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		})
 	}
 
-	log.Printf("REQUEST: %+v", req)
+	log.
+		WithField("holderCommitment", req.HolderCommitment).
+		WithField("userID", req.UserID).
+		Info("request")
 
 	if err := c.Validate(req); err != nil {
 		log.WithError(err).Error("validate gen cert request")
@@ -178,7 +181,9 @@ func (h *Handlers) GetCert(c echo.Context) error {
 		})
 	}
 
-	log.Printf("REQUEST: %+v", req)
+	log.
+		WithField("userID", req.UserID).
+		Info("request")
 
 	certificate, err := readCertFromDB(h.inMem, req.UserID)
 	if err != nil {
