@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -38,12 +37,12 @@ type Service struct {
 }
 
 func NewService(
-	ethereumPrivateKey string,
+	providerKey *ecdsa.PrivateKey,
+	signingKey babyjub.PrivateKey,
 	registryAddress common.Address,
 	rpcURL string,
 	merkleProofURL string,
 	merkleProofTLS bool,
-	certSigningKey string,
 ) (*Service, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -61,16 +60,6 @@ func NewService(
 	registry, err := contracts.NewZkCertificateRegistry(registryAddress, ethClient)
 	if err != nil {
 		return nil, fmt.Errorf("load record registry: %w", err)
-	}
-
-	providerKey, err := crypto.HexToECDSA(ethereumPrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("prepare provider key: %w", err)
-	}
-
-	signingKey, err := prepareBabyJubSigningKey(certSigningKey, ethereumPrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("prepare signing key: %w", err)
 	}
 
 	taskQueue := tq.NewQueue(100)
@@ -351,41 +340,4 @@ func generateRandomSalt() (int64, error) {
 	randomSalt := salt.Int64() + 1 // [1, MaxInt64]
 
 	return randomSalt, nil
-}
-
-func inferBabyJubSigningKeyFromEthereumPrivateKey(ethereumPrivateKey string) (babyjub.PrivateKey, error) {
-	privateKey := []byte(ethereumPrivateKey)
-	res := make([]byte, hex.DecodedLen(len(privateKey)))
-
-	var byteErr hex.InvalidByteError
-	if _, err := hex.Decode(res, privateKey); errors.As(err, &byteErr) {
-		return babyjub.PrivateKey{}, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
-	} else if err != nil {
-		return babyjub.PrivateKey{}, errors.New("invalid hex data for private key")
-	}
-
-	signingKey := babyjub.PrivateKey(res)
-
-	return signingKey, nil
-}
-
-func prepareBabyJubSigningKey(certSigningKey string, ethereumPrivateKey string) (babyjub.PrivateKey, error) {
-	var signingKey babyjub.PrivateKey
-	if certSigningKey != "" {
-		keyBytes, err := hex.DecodeString(certSigningKey)
-		if err != nil {
-			return signingKey, fmt.Errorf("invalid hex string: %w", err)
-		}
-		if len(keyBytes) != 32 {
-			return signingKey, fmt.Errorf("invalid key length: expected 32 bytes, got %d", len(keyBytes))
-		}
-		copy(signingKey[:], keyBytes)
-	} else {
-		var err error
-		signingKey, err = inferBabyJubSigningKeyFromEthereumPrivateKey(ethereumPrivateKey)
-		if err != nil {
-			return signingKey, fmt.Errorf("inferring signing key: %w", err)
-		}
-	}
-	return signingKey, nil
 }

@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -10,6 +13,9 @@ import (
 	"syscall"
 
 	"github.com/dgraph-io/badger/v4"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/galactica-corp/guardians-sdk/pkg/keymanagement"
+	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -38,8 +44,8 @@ func main() {
 	}
 
 	configPath := os.Getenv("CONFIG_PATH")
-	privKey := os.Getenv("PRIVATE_KEY")
-	signingKey := os.Getenv("SIGNING_KEY")
+	ethereumPrivateKey := os.Getenv("PRIVATE_KEY")
+	certSigningKey := os.Getenv("SIGNING_KEY")
 
 	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
@@ -52,13 +58,23 @@ func main() {
 		log.Fatalf("unmarshal: %v", err)
 	}
 
+	providerKey, err := crypto.HexToECDSA(ethereumPrivateKey)
+	if err != nil {
+		log.Fatalf("prepare provider key: %v", err)
+	}
+
+	signingKey, err := prepareBabyJubSigningKey(certSigningKey, providerKey)
+	if err != nil {
+		log.Fatalf("prepare signing key: %v", err)
+	}
+
 	certGenerator, err := zkcert.NewService(
-		privKey,
+		providerKey,
+		signingKey,
 		cfg.RegistryAddress,
 		cfg.Node,
 		cfg.MerkleProofService.URL,
 		cfg.MerkleProofService.TLS,
-		signingKey,
 	)
 	if err != nil {
 		log.Fatalf("failed to create cert generator %v", err)
@@ -96,4 +112,25 @@ func main() {
 	}()
 	<-waiting
 	log.Info("🏁 finished.")
+}
+
+func prepareBabyJubSigningKey(certSigningKey string, privateKey *ecdsa.PrivateKey) (babyjub.PrivateKey, error) {
+	var signingKey babyjub.PrivateKey
+	if certSigningKey != "" {
+		keyBytes, err := hex.DecodeString(certSigningKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("invalid hex string: %w", err)
+		}
+		if len(keyBytes) != 32 {
+			return signingKey, fmt.Errorf("invalid key length: expected 32 bytes, got %d", len(keyBytes))
+		}
+		copy(signingKey[:], keyBytes)
+	} else {
+		var err error
+		signingKey, err = keymanagement.DeriveEdDSAKeyFromEthereumPrivateKey(privateKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("inferring signing key: %w", err)
+		}
+	}
+	return signingKey, nil
 }
