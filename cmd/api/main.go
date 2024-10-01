@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"gopkg.in/yaml.v3"
 	"io/fs"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/swissborg/galactica-kyc-guardian/config"
 	"github.com/swissborg/galactica-kyc-guardian/internal/api"
@@ -39,6 +39,7 @@ func main() {
 
 	configPath := os.Getenv("CONFIG_PATH")
 	privKey := os.Getenv("PRIVATE_KEY")
+	signingKey := os.Getenv("SIGNING_KEY")
 
 	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
@@ -57,6 +58,7 @@ func main() {
 		cfg.Node,
 		cfg.MerkleProofService.URL,
 		cfg.MerkleProofService.TLS,
+		signingKey,
 	)
 	if err != nil {
 		log.Fatalf("failed to create cert generator %v", err)

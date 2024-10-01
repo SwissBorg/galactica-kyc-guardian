@@ -43,6 +43,7 @@ func NewService(
 	rpcURL string,
 	merkleProofURL string,
 	merkleProofTLS bool,
+	certSigningKey string,
 ) (*Service, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -67,7 +68,7 @@ func NewService(
 		return nil, fmt.Errorf("prepare provider key: %w", err)
 	}
 
-	signingKey, err := inferSigningKeyFromEthereumPrivateKey(ethereumPrivateKey)
+	signingKey, err := prepareBabyJubSigningKey(certSigningKey, ethereumPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("prepare signing key: %w", err)
 	}
@@ -352,7 +353,7 @@ func generateRandomSalt() (int64, error) {
 	return randomSalt, nil
 }
 
-func inferSigningKeyFromEthereumPrivateKey(ethereumPrivateKey string) (babyjub.PrivateKey, error) {
+func inferBabyJubSigningKeyFromEthereumPrivateKey(ethereumPrivateKey string) (babyjub.PrivateKey, error) {
 	privateKey := []byte(ethereumPrivateKey)
 	res := make([]byte, hex.DecodedLen(len(privateKey)))
 
@@ -365,5 +366,26 @@ func inferSigningKeyFromEthereumPrivateKey(ethereumPrivateKey string) (babyjub.P
 
 	signingKey := babyjub.PrivateKey(res)
 
+	return signingKey, nil
+}
+
+func prepareBabyJubSigningKey(certSigningKey string, ethereumPrivateKey string) (babyjub.PrivateKey, error) {
+	var signingKey babyjub.PrivateKey
+	if certSigningKey != "" {
+		keyBytes, err := hex.DecodeString(certSigningKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("invalid hex string: %w", err)
+		}
+		if len(keyBytes) != 32 {
+			return signingKey, fmt.Errorf("invalid key length: expected 32 bytes, got %d", len(keyBytes))
+		}
+		copy(signingKey[:], keyBytes)
+	} else {
+		var err error
+		signingKey, err = inferBabyJubSigningKeyFromEthereumPrivateKey(ethereumPrivateKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("inferring signing key: %w", err)
+		}
+	}
 	return signingKey, nil
 }
