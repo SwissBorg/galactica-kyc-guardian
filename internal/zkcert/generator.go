@@ -169,19 +169,15 @@ func (s *Service) addZKCertToQueue(
 	certificate *zkcertificate.Certificate[zkcertificate.KYCContent],
 	callback func(*zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error),
 ) {
-	start, expiration, err := s.registry.GetTimeParameters(&bind.CallOpts{}, certificate.LeafHash.Bytes32())
+	myTurn, err := s.registry.CheckZkCertificateHashInQueue(&bind.CallOpts{Context: ctx}, certificate.LeafHash.Bytes32())
 	if err != nil {
-		callback(nil, fmt.Errorf("retrieve time parameters for zkCertificate hash: %w", err))
+		callback(nil, fmt.Errorf("retrieve zkCertificate hash to check: %w", err))
 		return
 	}
 
-	startTime := time.Unix(start.Int64(), 0)
-	expirationTime := time.Unix(expiration.Int64(), 0)
-	duration := expirationTime.Sub(startTime)
-
-	if time.Now().After(expirationTime) {
-		startTime = time.Now()
-		expirationTime = startTime.Add(duration)
+	if !myTurn {
+		callback(nil, errRequiresRetry)
+		return
 	}
 
 	s.taskQueue.Add(tq.NewTask(
