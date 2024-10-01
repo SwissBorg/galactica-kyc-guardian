@@ -50,7 +50,7 @@ func NewService(
 		return nil, fmt.Errorf("connect to ethereum node: %v", err)
 	}
 
-	merkleProofClient, err := merkle.ConnectToMerkleProofService(ctx, merkleProofURL, merkleProofTLS)
+	merkleProofClient, err := merkle.ConnectToMerkleProofService(merkleProofURL, merkleProofTLS)
 	if err != nil {
 		return nil, fmt.Errorf("connect to merkle proof service: %v", err)
 	}
