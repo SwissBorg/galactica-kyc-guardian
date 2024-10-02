@@ -3,10 +3,8 @@ package zkcert
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"time"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/galactica-corp/guardians-sdk/cmd"
 	"github.com/galactica-corp/guardians-sdk/pkg/contracts"
 	"github.com/galactica-corp/guardians-sdk/pkg/encryption"
 	"github.com/galactica-corp/guardians-sdk/pkg/merkle"
@@ -89,42 +88,15 @@ func (s *Service) CreateZKCert(
 		return nil, fmt.Errorf("validate inputs: %w", err)
 	}
 
-	certificateContent, err := inputs.FFEncode()
+	content, err := inputs.FFEncode()
 	if err != nil {
 		return nil, fmt.Errorf("encode inputs to finite field: %w", err)
-	}
-
-	contentHash, err := certificateContent.Hash()
-	if err != nil {
-		return nil, fmt.Errorf("hash certificate content: %w", err)
-	}
-
-	signature, err := zkcertificate.SignCertificate(s.signingKey, contentHash, holderCommitment.CommitmentHash)
-	if err != nil {
-		return nil, fmt.Errorf("sign certificate: %w", err)
-	}
-
-	salt, err := generateRandomSalt()
-	if err != nil {
-		return nil, fmt.Errorf("generate random salt: %w", err)
 	}
 
 	/* one year expiration */
 	expirationDate := time.Now().AddDate(1, 0, 0)
 
-	certificate, err := zkcertificate.New(
-		holderCommitment.CommitmentHash,
-		certificateContent,
-		s.signingKey.Public(),
-		signature,
-		salt,
-		expirationDate,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create certificate: %w", err)
-	}
-
-	return certificate, nil
+	return cmd.CreateZKCert(content, holderCommitment, s.signingKey, expirationDate)
 }
 
 func (s *Service) AddZKCertToQueue(
@@ -329,15 +301,4 @@ func (s *Service) getAuth(ctx context.Context) (*bind.TransactOpts, error) {
 	}
 
 	return auth, nil
-}
-
-func generateRandomSalt() (int64, error) {
-	salt, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64)) // [0, MaxInt64)
-	if err != nil {
-		return 0, fmt.Errorf("generate random salt: %w", err)
-	}
-
-	randomSalt := salt.Int64() + 1 // [1, MaxInt64]
-
-	return randomSalt, nil
 }
