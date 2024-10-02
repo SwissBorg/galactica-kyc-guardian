@@ -2,11 +2,9 @@ package zkcert
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"time"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/galactica-corp/guardians-sdk/cmd"
 	"github.com/galactica-corp/guardians-sdk/pkg/contracts"
 	"github.com/galactica-corp/guardians-sdk/pkg/encryption"
 	"github.com/galactica-corp/guardians-sdk/pkg/merkle"
@@ -28,15 +27,17 @@ var errRequiresRetry = errors.New("requires a retry")
 type Service struct {
 	EthClient         *ethclient.Client
 	merkleProofClient merkleproof.QueryClient
-	privateKey        string
+	providerKey       *ecdsa.PrivateKey
 	registry          *contracts.ZkCertificateRegistry
 	registryAddress   common.Address
 	rpcURL            string
+	signingKey        babyjub.PrivateKey
 	taskQueue         *tq.Queue
 }
 
 func NewService(
-	privateKey string,
+	providerKey *ecdsa.PrivateKey,
+	signingKey babyjub.PrivateKey,
 	registryAddress common.Address,
 	rpcURL string,
 	merkleProofURL string,
@@ -50,7 +51,7 @@ func NewService(
 		return nil, fmt.Errorf("connect to ethereum node: %v", err)
 	}
 
-	merkleProofClient, err := merkle.ConnectToMerkleProofService(ctx, merkleProofURL, merkleProofTLS)
+	merkleProofClient, err := merkle.ConnectToMerkleProofService(merkleProofURL, merkleProofTLS)
 	if err != nil {
 		return nil, fmt.Errorf("connect to merkle proof service: %v", err)
 	}
@@ -66,9 +67,10 @@ func NewService(
 		rpcURL:            rpcURL,
 		EthClient:         ethClient,
 		merkleProofClient: merkleProofClient,
-		privateKey:        privateKey,
+		providerKey:       providerKey,
 		registry:          registry,
 		registryAddress:   registryAddress,
+		signingKey:        signingKey,
 		taskQueue:         taskQueue,
 	}, nil
 }
@@ -86,53 +88,15 @@ func (s *Service) CreateZKCert(
 		return nil, fmt.Errorf("validate inputs: %w", err)
 	}
 
-	certificateContent, err := inputs.FFEncode()
+	content, err := inputs.FFEncode()
 	if err != nil {
 		return nil, fmt.Errorf("encode inputs to finite field: %w", err)
 	}
 
-	contentHash, err := certificateContent.Hash()
-	if err != nil {
-		return nil, fmt.Errorf("hash certificate content: %w", err)
-	}
-
-	res := make([]byte, hex.DecodedLen(len([]byte(s.privateKey))))
-	var byteErr hex.InvalidByteError
-	if _, err = hex.Decode(res, []byte(s.privateKey)); errors.As(err, &byteErr) {
-		return nil, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
-	} else if err != nil {
-		return nil, errors.New("invalid hex data for private key")
-	}
-	providerKey := babyjub.PrivateKey(res)
-
-	signature, err := zkcertificate.SignCertificate(providerKey, contentHash, holderCommitment.CommitmentHash)
-	if err != nil {
-		return nil, fmt.Errorf("sign certificate: %w", err)
-	}
-
-	salt, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64)) // [0, MaxInt64)
-	if err != nil {
-		return nil, fmt.Errorf("generate random salt: %w", err)
-	}
-
-	randomSalt := salt.Int64() + 1 // [1, MaxInt64]
-
 	/* one year expiration */
 	expirationDate := time.Now().AddDate(1, 0, 0)
 
-	certificate, err := zkcertificate.New(
-		holderCommitment.CommitmentHash,
-		certificateContent,
-		providerKey.Public(),
-		signature,
-		randomSalt,
-		expirationDate,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create certificate: %w", err)
-	}
-
-	return certificate, nil
+	return cmd.CreateZKCert(content, holderCommitment, s.signingKey, expirationDate)
 }
 
 func (s *Service) AddZKCertToQueue(
@@ -140,12 +104,7 @@ func (s *Service) AddZKCertToQueue(
 	certificate *zkcertificate.Certificate[zkcertificate.KYCContent],
 	callback func(*zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error),
 ) error {
-	providerKey, err := crypto.HexToECDSA(s.privateKey)
-	if err != nil {
-		return fmt.Errorf("prepare provider key: %w", err)
-	}
-
-	err = s.ensureProviderIsGuardian(crypto.PubkeyToAddress(providerKey.PublicKey))
+	err := s.ensureProviderIsGuardian(crypto.PubkeyToAddress(s.providerKey.PublicKey))
 	if err != nil {
 		return fmt.Errorf("ensure provider is guardian: %w", err)
 	}
@@ -169,19 +128,15 @@ func (s *Service) addZKCertToQueue(
 	certificate *zkcertificate.Certificate[zkcertificate.KYCContent],
 	callback func(*zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error),
 ) {
-	start, expiration, err := s.registry.GetTimeParameters(&bind.CallOpts{}, certificate.LeafHash.Bytes32())
+	myTurn, err := s.registry.CheckZkCertificateHashInQueue(&bind.CallOpts{Context: ctx}, certificate.LeafHash.Bytes32())
 	if err != nil {
-		callback(nil, fmt.Errorf("retrieve time parameters for zkCertificate hash: %w", err))
+		callback(nil, fmt.Errorf("retrieve zkCertificate hash to check: %w", err))
 		return
 	}
 
-	startTime := time.Unix(start.Int64(), 0)
-	expirationTime := time.Unix(expiration.Int64(), 0)
-	duration := expirationTime.Sub(startTime)
-
-	if time.Now().After(expirationTime) {
-		startTime = time.Now()
-		expirationTime = startTime.Add(duration)
+	if !myTurn {
+		callback(nil, errRequiresRetry)
+		return
 	}
 
 	s.taskQueue.Add(tq.NewTask(
@@ -295,14 +250,14 @@ func encodeMerkleProof(proof merkle.Proof) [][32]byte {
 	return res
 }
 
-func build[T any](
-	certificate zkcertificate.Certificate[T],
+func build(
+	certificate zkcertificate.Certificate[zkcertificate.KYCContent],
 	registryAddress common.Address,
 	leafIndex int,
 	proof merkle.Proof,
 	chainID *big.Int,
-) *zkcertificate.IssuedCertificate[T] {
-	return &zkcertificate.IssuedCertificate[T]{
+) *zkcertificate.IssuedCertificate[zkcertificate.KYCContent] {
+	return &zkcertificate.IssuedCertificate[zkcertificate.KYCContent]{
 		Certificate: certificate,
 		Registration: zkcertificate.RegistrationDetails{
 			Address:   registryAddress,
@@ -340,12 +295,7 @@ func (s *Service) getAuth(ctx context.Context) (*bind.TransactOpts, error) {
 		return nil, fmt.Errorf("retrieve chain id: %w", err)
 	}
 
-	providerKey, err := crypto.HexToECDSA(s.privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("prepare provider key: %w", err)
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(providerKey, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(s.providerKey, chainID)
 	if err != nil {
 		return nil, fmt.Errorf("create transaction signer from private key: %w", err)
 	}

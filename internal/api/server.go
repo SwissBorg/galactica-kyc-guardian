@@ -28,7 +28,7 @@ func NewServer(generator *zkcert.Service, mem *badger.DB) *Server {
 func (s *Server) Start(cfg config.APIConf) error {
 	log.Infof("API server starting...")
 
-	s.echo = s.makeEcho(cfg)
+	s.echo = s.makeEcho()
 
 	err := s.echo.Start(fmt.Sprintf("%s:%s", cfg.Host, cfg.Port))
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *Server) Stop() error {
 	return nil
 }
 
-func (s *Server) makeEcho(cfg config.APIConf) *echo.Echo {
+func (s *Server) makeEcho() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Recover())
 
