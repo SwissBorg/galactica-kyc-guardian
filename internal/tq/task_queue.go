@@ -2,6 +2,7 @@ package tq
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -28,7 +29,13 @@ func NewTask[T any](
 	}
 }
 
-func (t Task[T]) Execute() error {
+func (t Task[T]) Execute() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic in task execution: %v", r)
+		}
+	}()
+
 	result, err := t.ExecuteFunc()
 	t.Callback(result, err)
 	return err
