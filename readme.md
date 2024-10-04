@@ -1,15 +1,6 @@
 # Galactica KYC Guardian
 
-Backend service that generates encrypted zk KYC certificates for the Galactica blockchain based on Swissborg KYC data.
-
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Configuration](#configuration)
-- [Setup](#setup)
-- [API](#api)
-- [Code Generation](#code-generation)
-- [Endpoints](#endpoints)
+Backend service that generates encrypted zk KYC certificates for the Galactica blockchain based on SwissBorg KYC data.
 
 ## Requirements
 
@@ -34,8 +25,6 @@ A YAML configuration file is required with the following structure:
 APIConf:
   Host: "0.0.0.0"
   Port: 8080
-  CORSEnabled: true
-  CORSOrigin: http://localhost,http://127.0.0.1:8080
 
 # Galactica node URL
 Node: https://evm-rpc-http-reticulum.galactica.com
