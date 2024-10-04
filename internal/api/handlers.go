@@ -118,12 +118,12 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		WithField("contentHash", cert.ContentHash).
 		Info("cert created")
 
-	callback := func(issuedCert *zkcertificate.IssuedCertificate[zkcertificate.KYCContent], err error) {
+	callback := func(issuedCert zkcertificate.IssuedCertificate[zkcertificate.KYCContent], err error) {
 		log.WithField("holderCommitment", hc).
 			WithField("userID", req.UserID).
 			Info("certificate issued")
 
-		encryptedCert, err := zkcert.EncryptKYCzkCert(holderCommitment, issuedCert)
+		encryptedCert, err := h.generator.EncryptZKCert(holderCommitment, issuedCert)
 		if err != nil {
 			log.WithError(err).Error("encrypting cert")
 			return
@@ -148,13 +148,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 			Info("certificate added to db")
 	}
 
-	err = h.generator.AddZKCertToQueue(context.Background(), cert, callback)
-	if err != nil {
-		log.WithError(err).Error(ErrAddCertToQueue)
-		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: fmt.Sprintf("%v: %v", err, ErrAddCertToQueue),
-		})
-	}
+	h.generator.AddZKCertToQueue(context.Background(), *cert, callback)
 
 	// set nil cert to userID key means
 	// that certificate status is pending
