@@ -1,18 +1,22 @@
-FROM golang:1.22.5-alpine3.19 AS builder
+# Use the $BUILDPLATFORM for the build stage
+FROM --platform=$BUILDPLATFORM golang:1.22.5-alpine3.19 AS builder
+
 WORKDIR /app
-RUN cat /etc/resolv.conf && apk add --no-cache git && \
-	git config --add --global url."git@github.com:".insteadOf https://github.com
 
 # Prepare dependencies
-COPY go.mod go.sum ./
+COPY go.mod go.sum .
 RUN go mod download
-# Build the binary
+
+# Copy the sources and config
 COPY ./cmd ./cmd
 COPY ./internal ./internal
 COPY ./config ./config
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api ./cmd/api
 
+# Build the binary based on the target platform
+ARG TARGETOS TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o api ./cmd/api
 
+# Use the $TARGETPLATFORM by default for the runtime stage
 FROM alpine:3.19
 WORKDIR /app
 COPY --from=builder /app/api ./api
