@@ -41,6 +41,12 @@ func readCertFromDB(db *badger.DB, userID UserID) (string, error) {
 	return string(certData), nil
 }
 
+func deleteUserDataFromDB(db *badger.DB, userID UserID) error {
+	return db.Update(func(txn *badger.Txn) error {
+		return txn.Delete([]byte(userID))
+	})
+}
+
 func stripToSix(hash zkcertificate.Hash) string {
 	s := hash.String()
 	if len(s) > 6 {
