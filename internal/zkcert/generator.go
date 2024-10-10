@@ -103,9 +103,6 @@ func (s *Service) AddZKCertToQueue(
 ) {
 	s.taskQueue.Add(tq.NewTask(
 		func() (zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error) {
-			// This is to give the merkle proof service time to "see" the latest merkle proof root
-			time.Sleep(3 * time.Second)
-
 			_, issuedCert, err := cmd.IssueZKCert(ctx, certificate, s.EthClient, s.merkleProofClient, s.registryAddress, s.providerKey)
 			if err != nil {
 				log.WithError(err).Error("issue zk certificate")

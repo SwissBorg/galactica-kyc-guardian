@@ -119,6 +119,15 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		Info("cert created")
 
 	callback := func(issuedCert zkcertificate.IssuedCertificate[zkcertificate.KYCContent], err error) {
+		if err != nil {
+			log.WithError(err).Error("cert issuance")
+
+			if err := deleteUserDataFromDB(h.inMem, req.UserID); err != nil {
+				log.WithError(err).Error("clean up db after cert issuance")
+			}
+			return
+		}
+
 		log.WithField("holderCommitment", hc).
 			WithField("userID", req.UserID).
 			Info("certificate issued")
