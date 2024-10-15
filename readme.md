@@ -8,9 +8,11 @@ To run this project, you need to have the following secrets passed to the applic
 
 - `CONFIG_PATH`: Path to the config file
 - `PRIVATE_KEY`: ECDSA private key for blockchain interactions
-- `SIGNING_KEY`: (Optional) EdDSA private key for ZK certificate signing. The key will be derived from `PRIVATE_KEY` if not provided
+- `SIGNING_KEY`: EdDSA private key for ZK certificate signing
 
 These can be set in a `.env` file for local development.
+
+For production environment, follow this guide on [setup to become a guardian](https://docs.galactica.com/galactica-developer-documentation/guardian-guide/setup-to-become-a-guardian).
 
 > [!WARNING]
 > The private key should be whitelisted in the Guardians Registry to be able to sign transactions.
@@ -67,6 +69,7 @@ POST /cert/generate
 ```
 
 Request body:
+
 ```json
 {
   "encryption_pub_key": "OEotdsfEuoiqM7ob2KJEQemhWodn87hZNFv890q4xGw=",
@@ -83,6 +86,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "status": "PENDING"
@@ -96,6 +100,7 @@ POST /cert/get
 ```
 
 Request body:
+
 ```json
 {
   "user_id":"12345"
@@ -103,6 +108,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "status": "DONE",
