@@ -7,7 +7,7 @@ require (
 	github.com/biter777/countries v1.7.5
 	github.com/dgraph-io/badger/v4 v4.2.0
 	github.com/ethereum/go-ethereum v1.14.8
-	github.com/galactica-corp/guardians-sdk v1.10.1
+	github.com/galactica-corp/guardians-sdk v1.11.0
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/iden3/go-iden3-crypto v0.0.16
 	github.com/joho/godotenv v1.5.1
