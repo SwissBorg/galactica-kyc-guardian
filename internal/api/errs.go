@@ -9,6 +9,7 @@ var (
 	ErrParsDate           = fmt.Errorf("parsing profile date failed")
 	ErrParsNationality    = fmt.Errorf("parsing profile nationality failed")
 	ErrCertGenerating     = fmt.Errorf("generating cert failed")
+	ErrCertNotFound       = fmt.Errorf("certificate not found")
 	ErrReadCertStatus     = fmt.Errorf("reading cert status failed")
 	ErrAddCertToQueue     = fmt.Errorf("adding cert to queue failed")
 	ErrAddCertToDB        = fmt.Errorf("adding cert to DB failed")

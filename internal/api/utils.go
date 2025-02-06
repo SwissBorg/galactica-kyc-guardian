@@ -25,7 +25,7 @@ func readCertFromDB(db *badger.DB, userID UserID) (string, error) {
 	err := db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(userID))
 		if err == badger.ErrKeyNotFound {
-			return fmt.Errorf("certificate not found")
+			return ErrCertNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("error retrieving certificate: %w", err)
