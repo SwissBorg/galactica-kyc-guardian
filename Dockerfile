@@ -1,5 +1,5 @@
 # Use the $BUILDPLATFORM for the build stage
-FROM --platform=$BUILDPLATFORM golang:1.22.8-alpine3.19 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.22.12-alpine3.21 AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o api ./cmd/api
 
 # Use the $TARGETPLATFORM by default for the runtime stage
-FROM alpine:3.19
+FROM alpine:3.21
 WORKDIR /app
 COPY --from=builder /app/api ./api
 COPY --from=builder /app/config ./config
