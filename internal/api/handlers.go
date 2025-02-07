@@ -189,6 +189,14 @@ func (h *Handlers) GetCert(c echo.Context) error {
 		Info("request")
 
 	certificate, err := readCertFromDB(h.inMem, req.UserID)
+
+	if err == ErrCertNotFound {
+		log.WithError(err).Error(ErrCertNotFound)
+		return c.JSON(http.StatusNotFound, ErrorResp{
+			Error: fmt.Sprintf("%v: %v", ErrCertNotFound, err),
+		})
+	}
+
 	if err != nil {
 		log.WithError(err).Error(ErrReadCertStatus)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{
