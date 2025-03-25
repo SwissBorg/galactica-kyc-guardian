@@ -9,7 +9,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.13
 	github.com/galactica-corp/guardians-sdk v1.11.0
 	github.com/go-playground/validator/v10 v10.19.0
-	github.com/iden3/go-iden3-crypto v0.0.16
+	github.com/iden3/go-iden3-crypto v0.0.17
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/sirupsen/logrus v1.9.3
