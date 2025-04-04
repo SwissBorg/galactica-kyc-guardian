@@ -16,7 +16,7 @@ import (
 	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	log "github.com/sirupsen/logrus"
-	"github.com/swissborg/galactica-kyc-guardian/internal/tq"
+	"github.com/swissborg/galactica-kyc-guardian/internal/taskqueue"
 )
 
 var errRequiresRetry = errors.New("requires a retry")
@@ -29,7 +29,7 @@ type Service struct {
 	registryAddress   common.Address
 	rpcURL            string
 	signingKey        babyjub.PrivateKey
-	taskQueue         *tq.Queue
+	taskQueue         *taskqueue.Queue
 }
 
 func NewService(
@@ -58,7 +58,7 @@ func NewService(
 		return nil, fmt.Errorf("load record registry: %w", err)
 	}
 
-	taskQueue := tq.NewQueue(100)
+	taskQueue := taskqueue.NewQueue()
 
 	return &Service{
 		rpcURL:            rpcURL,
@@ -101,7 +101,7 @@ func (s *Service) AddZKCertToQueue(
 	certificate zkcertificate.Certificate[zkcertificate.KYCContent],
 	callback func(zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error),
 ) {
-	s.taskQueue.Add(tq.NewTask(
+	s.taskQueue.Add(taskqueue.NewTask(
 		func() (zkcertificate.IssuedCertificate[zkcertificate.KYCContent], error) {
 			_, issuedCert, err := cmd.IssueZKCert(ctx, certificate, s.EthClient, s.merkleProofClient, s.registryAddress, s.providerKey)
 			if err != nil {
