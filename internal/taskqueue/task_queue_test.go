@@ -1,4 +1,4 @@
-package tq
+package taskqueue
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestHeterogeneousQueue(t *testing.T) {
-	queue := NewQueue(10)
+	queue := NewQueue()
 	var mu sync.Mutex
 	var results []string
 
@@ -97,6 +97,88 @@ func TestHeterogeneousQueue(t *testing.T) {
 		"retry task error",
 		"executed retry task",
 		"retry task success: true",
+	}
+
+	if len(results) != len(expectedResults) {
+		t.Errorf("Expected %d results, got %d", len(expectedResults), len(results))
+		t.Errorf("Actual results: %v", results)
+		return
+	}
+
+	for i, result := range results {
+		if result != expectedResults[i] {
+			t.Errorf("Expected result %d to be %s, got %s", i, expectedResults[i], result)
+		}
+	}
+}
+
+func TestTaskExpiration(t *testing.T) {
+	// Override the task expiration time for testing
+	originalExpirationTime := TaskExpirationTime
+	TaskExpirationTime = 10 * time.Millisecond
+	defer func() {
+		TaskExpirationTime = originalExpirationTime
+	}()
+
+	queue := NewQueue()
+	var mu sync.Mutex
+	var results []string
+
+	// Create a task that will be executed immediately
+	immediateTask := NewTask(
+		func() (string, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			results = append(results, "executed immediate task")
+			return "success", nil
+		},
+		func(result string, err error) {
+			mu.Lock()
+			defer mu.Unlock()
+			results = append(results, fmt.Sprintf("immediate callback with result: %v", result))
+		},
+		nil,
+	)
+
+	// Create a task with a modified creation time to simulate an expired task
+	expiredTask := NewTask(
+		func() (string, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			results = append(results, "executed expired task")
+			return "success", nil
+		},
+		func(result string, err error) {
+			mu.Lock()
+			defer mu.Unlock()
+			results = append(results, fmt.Sprintf("expired callback with result: %v", result))
+		},
+		nil,
+	)
+	// Manually set the creation time to simulate an expired task
+	expiredTask.CreatedAt = time.Now().Add(-TaskExpirationTime * 2)
+
+	queue.Add(immediateTask)
+	queue.Add(expiredTask)
+
+	// Wait for all tasks to complete
+	done := make(chan bool)
+	go func() {
+		queue.Wait()
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		// All tasks completed
+	case <-time.After(5 * time.Second):
+		t.Fatal("Test timed out")
+	}
+
+	// The expired task should not be executed
+	expectedResults := []string{
+		"executed immediate task",
+		"immediate callback with result: success",
 	}
 
 	if len(results) != len(expectedResults) {
