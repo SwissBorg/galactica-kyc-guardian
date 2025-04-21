@@ -6,7 +6,7 @@ require (
 	github.com/Galactica-corp/merkle-proof-service v0.2.7
 	github.com/biter777/countries v1.7.5
 	github.com/dgraph-io/badger/v4 v4.6.0
-	github.com/ethereum/go-ethereum v1.15.7
+	github.com/ethereum/go-ethereum v1.15.9
 	github.com/galactica-corp/guardians-sdk v1.13.1
 	github.com/gammazero/workerpool v1.1.3
 	github.com/go-playground/validator/v10 v10.26.0
