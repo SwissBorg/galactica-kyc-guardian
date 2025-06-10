@@ -17,7 +17,7 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o api ./cmd/api
 
 # Use the $TARGETPLATFORM by default for the runtime stage
-FROM alpine:3.21
+FROM alpine:3.22
 WORKDIR /app
 COPY --from=builder /app/api ./api
 COPY --from=builder /app/config ./config
