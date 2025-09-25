@@ -1,6 +1,6 @@
 module github.com/swissborg/galactica-kyc-guardian
 
-go 1.24.0
+go 1.24.7
 
 require (
 	github.com/Galactica-corp/merkle-proof-service v0.2.7
