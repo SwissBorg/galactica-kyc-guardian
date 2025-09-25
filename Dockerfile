@@ -18,8 +18,15 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o api ./cmd/api
 
 # Use the $TARGETPLATFORM by default for the runtime stage
 FROM alpine:3.22
+
+# Run as non-root
+RUN addgroup --gid "1001" "swissborg" && adduser --disabled-password --no-create-home --ingroup "swissborg" --uid "1001" "swissborg"
+USER swissborg
+
 WORKDIR /app
 COPY --from=builder /app/api ./api
 COPY --from=builder /app/config ./config
+
 EXPOSE 8080
+
 CMD ["./api"]
