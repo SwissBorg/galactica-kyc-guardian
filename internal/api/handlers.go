@@ -199,7 +199,7 @@ func (h *Handlers) GetCert(c echo.Context) error {
 
 	if err != nil {
 		log.WithError(err).Error(ErrReadCertStatus)
-		return c.JSON(http.StatusInternalServerError, ErrorResp{
+		return c.JSON(http.StatusBadRequest, ErrorResp{
 			Error: fmt.Sprintf("%v: %v", ErrReadCertStatus, err),
 		})
 	}
