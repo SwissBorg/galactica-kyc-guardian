@@ -14,8 +14,8 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/galactica-corp/guardians-sdk/pkg/keymanagement"
-	"github.com/iden3/go-iden3-crypto/babyjub"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/keymanagement"
+	"github.com/iden3/go-iden3-crypto/v2/babyjub"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
