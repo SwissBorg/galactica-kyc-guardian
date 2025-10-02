@@ -4,7 +4,7 @@ APIConf:
 
 Node: https://galactica-mainnet.g.alchemy.com/public
 
-RegistryAddress: 0xf98E14C33c573c26Bb14d8ca71e1c8756727Be53
+RegistryAddress: 0x5fce9D01Fa2f65fF17C3678c7970b8986e9270e4
 
 MerkleProofService:
   URL: grpc-merkle-613419.galactica.com:443
