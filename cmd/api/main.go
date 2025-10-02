@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -11,8 +13,12 @@ import (
 	"syscall"
 
 	"github.com/dgraph-io/badger/v4"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/keymanagement"
+	"github.com/iden3/go-iden3-crypto/v2/babyjub"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/swissborg/galactica-kyc-guardian/config"
 	"github.com/swissborg/galactica-kyc-guardian/internal/api"
@@ -38,7 +44,8 @@ func main() {
 	}
 
 	configPath := os.Getenv("CONFIG_PATH")
-	privKey := os.Getenv("PRIVATE_KEY")
+	ethereumPrivateKey := os.Getenv("PRIVATE_KEY")
+	certSigningKey := os.Getenv("SIGNING_KEY")
 
 	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
@@ -51,8 +58,24 @@ func main() {
 		log.Fatalf("unmarshal: %v", err)
 	}
 
+	providerKey, err := crypto.HexToECDSA(ethereumPrivateKey)
+	if err != nil {
+		log.Fatalf("prepare provider key: %v", err)
+	}
+
+	signingKey, err := prepareBabyJubSigningKey(certSigningKey, providerKey)
+	if err != nil {
+		log.Fatalf("prepare signing key: %v", err)
+	}
+
+	blockchainNode := os.Getenv("BLOCKCHAIN_NODE")
+	if blockchainNode == "" {
+		blockchainNode = cfg.Node
+	}
+
 	certGenerator, err := zkcert.NewService(
-		privKey,
+		providerKey,
+		signingKey,
 		cfg.RegistryAddress,
 		cfg.Node,
 		cfg.MerkleProofService.URL,
@@ -94,4 +117,25 @@ func main() {
 	}()
 	<-waiting
 	log.Info("🏁 finished.")
+}
+
+func prepareBabyJubSigningKey(certSigningKey string, privateKey *ecdsa.PrivateKey) (babyjub.PrivateKey, error) {
+	var signingKey babyjub.PrivateKey
+	if certSigningKey != "" {
+		keyBytes, err := hex.DecodeString(certSigningKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("invalid hex string: %w", err)
+		}
+		if len(keyBytes) != 32 {
+			return signingKey, fmt.Errorf("invalid key length: expected 32 bytes, got %d", len(keyBytes))
+		}
+		copy(signingKey[:], keyBytes)
+	} else {
+		var err error
+		signingKey, err = keymanagement.DeriveEdDSAKeyFromEthereumPrivateKey(privateKey)
+		if err != nil {
+			return signingKey, fmt.Errorf("inferring signing key: %w", err)
+		}
+	}
+	return signingKey, nil
 }

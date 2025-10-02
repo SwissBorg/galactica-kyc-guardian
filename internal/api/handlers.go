@@ -10,7 +10,7 @@ import (
 
 	"github.com/biter777/countries"
 	"github.com/dgraph-io/badger/v4"
-	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/zkcertificate"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/stasundr/decimal"
@@ -41,7 +41,10 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		})
 	}
 
-	log.Printf("REQUEST: %+v", req)
+	log.
+		WithField("holderCommitment", req.HolderCommitment).
+		WithField("userID", req.UserID).
+		Info("request")
 
 	if err := c.Validate(req); err != nil {
 		log.WithError(err).Error("validate gen cert request")
@@ -88,7 +91,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	}
 
 	code := countries.ByName(req.Profile.Nationality).Alpha3()
-	inputs := zkcertificate.KYCInputs{
+	inputs := zkcertificate.KYCContent{
 		Surname:      req.Profile.Firstname,
 		Forename:     req.Profile.Lastname,
 		YearOfBirth:  uint16(d.Year()),
@@ -115,12 +118,21 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 		WithField("contentHash", cert.ContentHash).
 		Info("cert created")
 
-	callback := func(issuedCert *zkcertificate.IssuedCertificate[zkcertificate.KYCContent], err error) {
+	callback := func(issuedCert zkcertificate.IssuedCertificate[zkcertificate.KYCContent], err error) {
+		if err != nil {
+			log.WithError(err).Error("cert issuance")
+
+			if err := deleteUserDataFromDB(h.inMem, req.UserID); err != nil {
+				log.WithError(err).Error("clean up db after cert issuance")
+			}
+			return
+		}
+
 		log.WithField("holderCommitment", hc).
 			WithField("userID", req.UserID).
 			Info("certificate issued")
 
-		encryptedCert, err := zkcert.EncryptKYCzkCert(holderCommitment, issuedCert)
+		encryptedCert, err := h.generator.EncryptZKCert(holderCommitment, issuedCert)
 		if err != nil {
 			log.WithError(err).Error("encrypting cert")
 			return
@@ -145,13 +157,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 			Info("certificate added to db")
 	}
 
-	err = h.generator.AddZKCertToQueue(context.Background(), cert, callback)
-	if err != nil {
-		log.WithError(err).Error(ErrAddCertToQueue)
-		return c.JSON(http.StatusInternalServerError, ErrorResp{
-			Error: fmt.Sprintf("%v: %v", err, ErrAddCertToQueue),
-		})
-	}
+	h.generator.AddZKCertToQueue(context.Background(), *cert, callback)
 
 	// set nil cert to userID key means
 	// that certificate status is pending
@@ -178,9 +184,19 @@ func (h *Handlers) GetCert(c echo.Context) error {
 		})
 	}
 
-	log.Printf("REQUEST: %+v", req)
+	log.
+		WithField("userID", req.UserID).
+		Info("request")
 
 	certificate, err := readCertFromDB(h.inMem, req.UserID)
+
+	if err == ErrCertNotFound {
+		log.WithError(err).Error(ErrCertNotFound)
+		return c.JSON(http.StatusNotFound, ErrorResp{
+			Error: fmt.Sprintf("%v: %v", ErrCertNotFound, err),
+		})
+	}
+
 	if err != nil {
 		log.WithError(err).Error(ErrReadCertStatus)
 		return c.JSON(http.StatusInternalServerError, ErrorResp{

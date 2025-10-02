@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/zkcertificate"
 )
 
 const userDataStoringTime = 30 * time.Minute
@@ -25,7 +25,7 @@ func readCertFromDB(db *badger.DB, userID UserID) (string, error) {
 	err := db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(userID))
 		if err == badger.ErrKeyNotFound {
-			return fmt.Errorf("certificate not found")
+			return ErrCertNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("error retrieving certificate: %w", err)
@@ -39,6 +39,12 @@ func readCertFromDB(db *badger.DB, userID UserID) (string, error) {
 		return "", err
 	}
 	return string(certData), nil
+}
+
+func deleteUserDataFromDB(db *badger.DB, userID UserID) error {
+	return db.Update(func(txn *badger.Txn) error {
+		return txn.Delete([]byte(userID))
+	})
 }
 
 func stripToSix(hash zkcertificate.Hash) string {

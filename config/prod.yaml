@@ -2,10 +2,10 @@ APIConf:
   Host: "0.0.0.0"
   Port: 8080
 
-Node: https://evm-rpc-http-reticulum.galactica.com
+Node: https://galactica-mainnet.g.alchemy.com/public
 
-RegistryAddress: 0x85032c035494324f62A5AfE2507d5427dFd72e76
+RegistryAddress: 0x5fce9D01Fa2f65fF17C3678c7970b8986e9270e4
 
 MerkleProofService:
-  URL: merkle-proof-service.galactica.com:443/v1/galactica/9302
+  URL: grpc-merkle-613419.galactica.com:443
   TLS: true
