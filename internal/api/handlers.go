@@ -10,7 +10,7 @@ import (
 
 	"github.com/biter777/countries"
 	"github.com/dgraph-io/badger/v4"
-	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/zkcertificate"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/stasundr/decimal"
@@ -91,7 +91,7 @@ func (h *Handlers) GenerateCert(c echo.Context) error {
 	}
 
 	code := countries.ByName(req.Profile.Nationality).Alpha3()
-	inputs := zkcertificate.KYCInputs{
+	inputs := zkcertificate.KYCContent{
 		Surname:      req.Profile.Firstname,
 		Forename:     req.Profile.Lastname,
 		YearOfBirth:  uint16(d.Year()),

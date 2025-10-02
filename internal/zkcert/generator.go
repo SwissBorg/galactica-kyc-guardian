@@ -10,12 +10,13 @@ import (
 	merkleproof "github.com/Galactica-corp/merkle-proof-service/gen/galactica/merkle"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/galactica-corp/guardians-sdk/cmd"
-	"github.com/galactica-corp/guardians-sdk/pkg/contracts"
-	"github.com/galactica-corp/guardians-sdk/pkg/merkle"
-	"github.com/galactica-corp/guardians-sdk/pkg/zkcertificate"
-	"github.com/iden3/go-iden3-crypto/babyjub"
+	"github.com/galactica-corp/guardians-sdk/v4/cmd"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/contracts"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/merkle"
+	"github.com/galactica-corp/guardians-sdk/v4/pkg/zkcertificate"
+	"github.com/iden3/go-iden3-crypto/v2/babyjub"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/swissborg/galactica-kyc-guardian/internal/taskqueue"
 )
 
@@ -79,15 +80,10 @@ func (s *Service) Close() {
 
 func (s *Service) CreateZKCert(
 	holderCommitment zkcertificate.HolderCommitment,
-	inputs zkcertificate.KYCInputs,
+	content zkcertificate.KYCContent,
 ) (*zkcertificate.Certificate[zkcertificate.KYCContent], error) {
-	if err := inputs.Validate(); err != nil {
+	if err := content.Validate(); err != nil {
 		return nil, fmt.Errorf("validate inputs: %w", err)
-	}
-
-	content, err := inputs.FFEncode()
-	if err != nil {
-		return nil, fmt.Errorf("encode inputs to finite field: %w", err)
 	}
 
 	/* one year expiration */

@@ -2,10 +2,10 @@ APIConf:
   Host: "0.0.0.0"
   Port: 8080
 
-Node: https://evm-rpc-http-andromeda.galactica.com
+Node: https://galactica-cassiopeia.g.alchemy.com/public
 
-RegistryAddress: 0x29eFd381054edDb68163C0D34546d9EaE9710091
+RegistryAddress: 0xFe35EF5D1E8488a6b06BD35434613917e7d9760f
 
 MerkleProofService:
-  URL: grpc-merkle-41238.galactica.com:443
+  URL: grpc-merkle-843843.galactica.com:443
   TLS: true

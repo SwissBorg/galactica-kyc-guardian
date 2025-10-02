@@ -6,6 +6,7 @@ Backend service that generates encrypted zk KYC certificates for the Galactica b
 
 To run this project, you need to have the following secrets passed to the application via environment variables:
 
+- `BLOCKCHAIN_NODE`: URL of the blockchain node, if it is not the public one
 - `CONFIG_PATH`: Path to the config file
 - `PRIVATE_KEY`: ECDSA private key for blockchain interactions
 - `SIGNING_KEY`: EdDSA private key for ZK certificate signing
@@ -17,7 +18,7 @@ For production environment, follow this guide on [setup to become a guardian](ht
 > [!WARNING]
 > The private key should be whitelisted in the Guardians Registry to be able to sign transactions.
 >
-> Guardians Registry contract address for Reticulum is `0x20682CE367cE2cA50bD255b03fEc2bd08Cc1c8Bd`.
+> Guardians Registry contract address for Cassiopeia is `0xBcf3641f4A4a0fF102F5800291f09e2Bd87c0a53`.
 
 ## Configuration
 
@@ -29,10 +30,10 @@ APIConf:
   Port: 8080
 
 # Galactica node URL
-Node: https://evm-rpc-http-reticulum.galactica.com
+Node: https://galactica-cassiopeia.g.alchemy.com/public
 
 # zk KYC Registry contract address on Galactica
-RegistryAddress: 0xc2032b11b79B05D1bd84ca4527D2ba8793cB67b2 # Reticulum
+RegistryAddress: 0xFe35EF5D1E8488a6b06BD35434613917e7d9760f # Cassiopeia
 
 # Merkle proof service, can be self-hosted: https://github.com/galactica-corp/merkle-proof-service
 MerkleProofService:
