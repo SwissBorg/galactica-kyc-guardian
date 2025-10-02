@@ -68,6 +68,11 @@ func main() {
 		log.Fatalf("prepare signing key: %v", err)
 	}
 
+	blockchainNode := os.Getenv("BLOCKCHAIN_NODE")
+	if blockchainNode == "" {
+		blockchainNode = cfg.Node
+	}
+
 	certGenerator, err := zkcert.NewService(
 		providerKey,
 		signingKey,

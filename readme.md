@@ -6,6 +6,7 @@ Backend service that generates encrypted zk KYC certificates for the Galactica b
 
 To run this project, you need to have the following secrets passed to the application via environment variables:
 
+- `BLOCKCHAIN_NODE`: URL of the blockchain node, if it is not the public one
 - `CONFIG_PATH`: Path to the config file
 - `PRIVATE_KEY`: ECDSA private key for blockchain interactions
 - `SIGNING_KEY`: EdDSA private key for ZK certificate signing
