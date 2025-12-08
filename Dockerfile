@@ -17,7 +17,7 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o api ./cmd/api
 
 # Use the $TARGETPLATFORM by default for the runtime stage
-FROM alpine:3.22
+FROM alpine:3.23
 
 # Run as non-root
 RUN addgroup --gid "1001" "swissborg" && adduser --disabled-password --no-create-home --ingroup "swissborg" --uid "1001" "swissborg"
